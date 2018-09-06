@@ -8,10 +8,7 @@ services:
     restart: always
     ports:
       - "5601:5601"
-    links:
-      - elasticsearch
-    depends_on:
-      - elasticsearch
+    depends_on: ['elasticsearch']
     environment:
       - "ELASTICSEARCH_PASSWORD=${ES_PASSWORD}"
     healthcheck:
@@ -52,22 +49,13 @@ services:
       - "7777:7777"
     environment:
       - "ELASTICSEARCH_PASSWORD=${ES_PASSWORD}"
-    links:
-      - elasticsearch
-      - kafka1
-      - kafka2
-      - kafka3
+    healthcheck:
+      test: ["CMD", "curl", "-s", "-f", "localhost:9600/?pretty"]
+
   kafka1:
     container_name: kafka1
     image: wurstmeister/kafka
-    depends_on:
-      - zoo1
-      - zoo2
-      - zoo3
-    links:
-      - zoo1
-      - zoo2
-      - zoo3
+    depends_on: [ 'zoo1', 'zoo2', 'zoo3']
     ports:
       - "9092:9092"
     environment:
@@ -79,17 +67,11 @@ services:
       KAFKA_ADVERTISED_HOST_NAME: "kafka1"
       KAFKA_CREATE_TOPICS: "log:3:3"
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+
   kafka2:
     container_name: kafka2
     image: wurstmeister/kafka
-    depends_on:
-      - zoo1
-      - zoo2
-      - zoo3
-    links:
-      - zoo1
-      - zoo2
-      - zoo3
+    depends_on: [ 'zoo1', 'zoo2', 'zoo3']
     ports:
       - "9093:9092"
     environment:
@@ -101,17 +83,11 @@ services:
       KAFKA_ZOOKEEPER_CONNECT:  zoo1:2181,zoo2:2181,zoo3:2181
       KAFKA_CREATE_TOPICS: "log:3:3"
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+
   kafka3:
     image: wurstmeister/kafka
     container_name: kafka3
-    depends_on:
-      - zoo1
-      - zoo2
-      - zoo3
-    links:
-      - zoo1
-      - zoo2
-      - zoo3
+    depends_on: [ 'zoo1', 'zoo2', 'zoo3']
     ports:
       - "9094:9092"
     environment:
@@ -123,6 +99,7 @@ services:
       KAFKA_ZOOKEEPER_CONNECT:  zoo1:2181,zoo2:2181,zoo3:2181
       KAFKA_CREATE_TOPICS: "log:3:3"
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+
   zoo1:
     image: elevy/zookeeper:latest
     container_name: zoo1
@@ -131,6 +108,7 @@ services:
       SERVERS: zoo1,zoo2,zoo3
     ports:
       - "2181:2181"
+
   zoo2:
     image: elevy/zookeeper:latest
     container_name: zoo2
@@ -139,6 +117,7 @@ services:
       SERVERS: zoo1,zoo2,zoo3
     ports:
       - "2182:2181"
+
   zoo3:
     image: elevy/zookeeper:latest
     container_name: zoo3
@@ -147,25 +126,22 @@ services:
       SERVERS: zoo1,zoo2,zoo3
     ports:
       - "2183:2181"
+
   filebeat:
     image: docker.elastic.co/beats/filebeat${VERSION_TYPE}:${ELASTIC_VERSION}
     user: root
     mem_limit: 1g
     container_name: filebeat
+    command: filebeat -e -strict.perms=false
+    restart: on-failure
     volumes:
       - "./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro"
       - "./apache-logs:/apache-logs"
       - "/var/log/:/var/log/host/:ro"
       - "/var/lib/docker/containers:/docker-logs/containers"
-    links:
-      - kafka1
-      - kafka2
-      - kafka3
-    depends_on:
-      - apache
-      - kafka1
-      - kafka2
-      - kafka3
+    depends_on: 
+      [ 'kafka1', 'kafka2', 'kafka3', 'elasticsearch']
+
   apache:
     image: lzrbear/docker-apache2-ubuntu
     container_name: apache
