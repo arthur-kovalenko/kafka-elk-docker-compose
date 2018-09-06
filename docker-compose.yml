@@ -12,6 +12,11 @@ services:
       - elasticsearch
     depends_on:
       - elasticsearch
+    environment:
+      - "ELASTICSEARCH_PASSWORD=${ES_PASSWORD}"
+    healthcheck:
+      test: ["CMD", "curl", "-s", "-f", "http://localhost:5601/login"]
+      retries: 6
 
   elasticsearch:
     container_name: elasticsearch
@@ -30,7 +35,7 @@ services:
     healthcheck:
       test: ["CMD", "curl","-s" ,"-f", "-u", "elastic:${ES_PASSWORD}", "http://localhost:9200/_cat/health"]
     volumes:
-      - "./esdata:/usr/share/elasticsearch/data"
+      - "/data/esdata:/usr/share/elasticsearch/data"
       - ".elasticsearch.yml:/usr/share/elasticsearch/elasticsearch.yml"
     ports:
       - "9200:9200"
