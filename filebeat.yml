@@ -1,4 +1,5 @@
-filebeat.prospectors:
+filebeat.prospectors:        
+
 - paths:
     - /apache-logs/access.log
   tags:
@@ -7,6 +8,16 @@ filebeat.prospectors:
   input_type: log
   document_type: apache_access
   fields_under_root: true
+
+- paths:
+    - /docker-logs/containers/*/*.log
+  tags:
+    - docker
+  json.keys_under_root: true
+  json.overwrite_keys: true
+  close_inactive: 24h
+  close_renamed: true
+  pipeline: docker-logs
 
 - paths:
     - /apache-logs/error.log

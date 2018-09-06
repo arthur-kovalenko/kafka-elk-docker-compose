@@ -1,0 +1,3 @@
+node.name: node-1
+path.data: /usr/share/elasticsearch/data
+http.port: 9200
